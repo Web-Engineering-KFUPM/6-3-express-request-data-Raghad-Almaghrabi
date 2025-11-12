@@ -1,41 +1,41 @@
 /**
-===================================================================
-Back-end Lab — Express request data
-===================================================================
+ ===================================================================
+ Back-end Lab — Express request data
+ ===================================================================
 
-===================================================================
-LAB SETUP INSTRUCTIONS
-===================================================================
+ ===================================================================
+ LAB SETUP INSTRUCTIONS
+ ===================================================================
 
-1. Navigate to the project directory:
-   Open your terminal and run:
-      cd 6-3-express-request-data
+ 1. Navigate to the project directory:
+ Open your terminal and run:
+ cd 6-3-express-request-data
 
-2. Install project dependencies:
-   Run either of these commands:
-      npm i
-      OR
-      npm install
-      npm install express cors
+ 2. Install project dependencies:
+ Run either of these commands:
+ npm i
+ OR
+ npm install
+ npm install express cors
 
-3. Start the back-end server from terminal, path: 6-3-express-request-data-Dromarjh-main\6-3-express-request-data:
-   Run:
-      node server.js
+ 3. Start the back-end server from terminal, path: 6-3-express-request-data-Dromarjh-main\6-3-express-request-data:
+ Run:
+ node server.js
 
-  If your system blocks running npm commands (especially on Windows PowerShell),
-   run this command first to allow script execution:
-      Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-  
+ If your system blocks running npm commands (especially on Windows PowerShell),
+ run this command first to allow script execution:
+ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
  * ============================================
  * TODO-1 (Server Setup):
  * ============================================
  *   - create Express app instance
  *   - start server on port 3000
  *   - show console.log("API running at http://localhost:3000")
- *   HINT: 
+ *   HINT:
  *     const app = express();
  *     app.listen(3000, ()=> console.log(...));
- * 
+ *
  *============================================
  * TODO-2 (/echo route):
  * ============================================
@@ -80,10 +80,10 @@ LAB SETUP INSTRUCTIONS
  *============================================
  *
  * # After running server:
- * 
+ *
  * curl "http://localhost:3000"
  *   → just see server up
- * 
+ *
  * curl "http://localhost:3000/echo?name=Ali&age=22"
  *   → 200 { ok:true, name:"Ali", age:"22", msg:"Hello Ali, you are 22" }
  *
@@ -104,23 +104,72 @@ LAB SETUP INSTRUCTIONS
  *
  */
 
-import express from "express";
-const app = express();
 
 
 // create server
+import express from "express";
+import cors from "cors";
+
+const app = express();
+
+// Middlewares
+app.use(cors());
+app.use(express.json());
+
+// create root
+const PORT = 3000;
+app.get("/", (req, res) => {
+    res.status(200).json({
+        ok: true,
+        msg: "Express Request Data lab server is up",
+        hint: "Try /echo, /profile/:first/:last, /users/:userId",
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`API running at http://localhost:${PORT}`);
+});
 
 
 // Query params: /echo?name=Ali&age=22
+app.get("/echo", (req, res) => {
+    const { name, age } = req.query;
+
+    if (!name || !age) {
+        return res.status(400).json({ ok: false, error: "name & age required" });
+    }
+
+    return res.json({
+        ok: true,
+        name,
+        age, // keep as string to match the sample output
+        msg: `Hello ${name}, you are ${age}`,
+    });
+});
 
 
 // Route params: /profile/First/Last
+app.get("/profile/:first/:last", (req, res) => {
+    const { first, last } = req.params;
+    return res.json({ ok: true, fullName: `${first} ${last}` });
+});
 
+
+// Route param
+app.param("userId", (req, res, next, userId) => {
+    const n = Number(userId);
+    if (!Number.isFinite(n) || n <= 0 || !/^\d+$/.test(userId)) {
+        return res.status(400).json({ ok: false, error: "userId must be positive number" });
+    }
+    req.userIdNum = n;
+    next();
+});
 
 // Route param middleware example: /users/42
 
-
-// Route params: /users/:userId route
+app.get("/users/:userId", (req, res) => {
+    res.json({ ok: true, userId: req.userIdNum });
+});
 
 
 
